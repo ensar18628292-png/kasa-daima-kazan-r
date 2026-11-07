@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<title>ALTINŞANS – Kumar Simülasyonu (gerçek para yok)</title>
+<style>
+:root{--bg:#0f0e1b;--cd:#1a1830;--gd:#f6c026;--rd:#e0314b;--tx:#f4f1ff;--mu:#9d98bd;box-sizing:border-box;padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+#bar{background:var(--rd);text-align:center;font-size:12px;font-weight:700;padding:5px;padding-top:calc(5px + env(safe-area-inset-top,0px))}
+#tick{overflow:hidden;white-space:nowrap;background:#16142a;font-size:12px;color:var(--gd)}
+#tk{display:inline-block;padding:6px 0;animation:mq 40s linear infinite}
+@keyframes mq{to{transform:translateX(-50%)}}
+#tk span{margin-right:30px}
+#sh{display:flex;max-width:600px;margin:auto;min-height:calc(100vh - 60px)}
+.sd{width:52px;background:#13112370;border-right:1px solid #26233f;display:flex;flex-direction:column;gap:8px;padding:12px 6px;position:sticky;top:0;align-self:flex-start}
+.sd button{height:38px;border-radius:10px;border:0;background:#211f3b;color:var(--gd);font-size:17px;cursor:pointer}
+.ct{flex:1;min-width:0;padding:12px}
+.tp{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.lg{color:var(--gd);letter-spacing:.05em;font-size:16px;flex:1}
+.bc{background:#211f3b;border-radius:10px;padding:8px 10px;font-size:13px;font-weight:700}
+.gb{border:0;border-radius:10px;background:var(--gd);color:#1b1203;font-weight:800;padding:9px 14px;font-size:14px;cursor:pointer;font-family:inherit}
+.bn{border-radius:16px;padding:18px;background:linear-gradient(120deg,#6a2cd8,#c23bd0 60%,#ff7a59);margin-bottom:12px}
+.bn h2{margin:4px 0;font-size:22px;color:#fff}.bn small,.bn p{color:#fff;opacity:.9;margin:2px 0 10px;display:block}
+.tabs{display:flex;gap:6px;margin:6px 0 10px;overflow-x:auto}
+.tabs button{border:0;border-radius:10px;padding:8px 14px;background:#1d1b35;color:var(--mu);font-size:13px;white-space:nowrap;cursor:pointer;font-family:inherit}
+.tabs button.on{background:#2b2850;color:var(--gd)}
+.rw{margin-bottom:14px}.rw h3{font-size:14px;margin:0 0 8px}
+.sc{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px}
+.t{flex:0 0 92px;aspect-ratio:3/4;border-radius:12px;position:relative;overflow:hidden;cursor:pointer;border:0;color:#fff;font-family:inherit}
+.t i{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:38px;font-style:normal;text-shadow:0 2px 8px #0008}
+.t b{position:absolute;left:0;right:0;bottom:0;padding:16px 4px 6px;font-size:11px;background:linear-gradient(transparent,#000b)}
+.cd{background:var(--cd);border:1px solid #2a2749;border-radius:16px;padding:14px;margin-bottom:12px}
+.cd p,li,small{color:var(--mu);line-height:1.55;font-size:15px}
+label{display:block;font-size:13px;color:var(--mu);margin:10px 0 4px}
+input{width:100%;padding:12px;border-radius:10px;border:1px solid #38345e;background:#0e0d1a;color:var(--tx);font-size:16px}
+.b{display:block;width:100%;padding:13px;border:0;border-radius:12px;font-size:16px;font-weight:800;color:#1b1203;background:var(--gd);margin-top:10px;cursor:pointer;font-family:inherit}
+.b.r{background:var(--rd);color:#fff}.b.k{background:#26233f;color:#fff}.b.g{background:transparent;color:var(--gd);border:1px solid var(--gd);font-weight:600}
+.b:disabled{opacity:.4}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.res{font-size:52px;font-weight:900;text-align:center;height:76px;line-height:76px;letter-spacing:.1em}
+.msg{min-height:44px;text-align:center;font-size:15px}
+.chip{display:inline-block;width:26px;height:26px;border-radius:50%;line-height:26px;text-align:center;font-size:12px;font-weight:700;margin:2px}
+#pw{display:none;margin:8px 0}#pb{height:8px;background:var(--gd);width:0;border-radius:6px}
+.st{display:flex;justify-content:space-between;border-bottom:1px solid #2a2749;padding:8px 0;font-size:15px;gap:10px}
+h1{color:var(--gd);text-align:center;margin:10px 0}
+</style>
+</head>
+<body>
+<div id="bar">SİMÜLASYON · Gerçek para yok · Hiçbir bahis gerçek değil</div>
+<div id="tick"><div id="tk"></div></div>
+<div id="m"></div>
+<script>
+const $=s=>document.querySelector(s);
+const fmt=n=>Math.round(n).toLocaleString('tr-TR')+' ₺';
+const RED=[1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36];
+const BLK=Array.from({length:36},(_,i)=>i+1).filter(n=>!RED.includes(n));
+const SYM=['7','★','♦','♣','♥','♠'];
+const pick=a=>a[Math.random()*a.length|0];
+let G;
+(()=>{const n=['ah***t','m***e','k***n','ö***s','ze***','bu***','em***','ha***'];let h='';
+for(let i=0;i<12;i++)h+='<span>'+pick(n)+' <b>'+(Math.floor(Math.random()*90+5)*100).toLocaleString('tr-TR')+' ₺</b> kazandı</span>';
+$('#tk').innerHTML=h+h})();
+
+/* oyun listesi: [ad, ton, sembol] */
+const ROWS=[
+['Popüler Oyunlar','s',[['Altın Tapınak',45,'♛'],['Vahşi Çark',320,'★'],['Neon Top',200,'●'],['Şeker Yağmuru',330,'✿'],['Süper 777',0,'7'],['Meyve Sağanağı',130,'♥'],['Korsan Define',25,'♠']]],
+['Yeni Oyunlar','s',[['Ejder Servet',10,'♦'],['Mısır Gizemi',40,'♣'],['Noel Piyango',200,'❄'],['Kristal Maden',190,'◆'],['Okyanus Kralı',215,'≈'],['Kumarbaz Şansı',280,'♠'],['Gizem Kasası',160,'?']]],
+['Canlı Casino','r',[['Canlı Rulet',350,'◉'],['Altın Rulet',45,'◎'],['VIP Rulet',270,'⊕'],['Hızlı Rulet',150,'⊙'],['Mega Rulet',300,'✦'],['Turbo Rulet',10,'⊗']]]
+];
+const limit=()=>(G.w||5000)*6;
+const canRaise=()=>G.al>0||(G.w>0&&G.wl>0)||Object.values(G.items).some(v=>v>0)||G.debt+6000<=limit();
+
+function intro(){
+  $('#m').innerHTML='<div class="ct" style="max-width:520px;margin:auto"><h1>ALTINŞANS</h1><p style="text-align:center;color:var(--mu)">Kumar simülasyonu. Para da, kazanç da, kayıp da sanal.</p>'+
+  '<div class="cd"><p style="margin:0">1.000 ₺ sanal bonusla başlarsın. Para bitince reklam izleyebilir, maaşını yatırabilir, kredi çekebilir ya da varlıklarını satabilirsin. Dilediğin an çıkıp sonuca bakabilirsin.</p>'+
+  '<label>Aylık maaşın (sanal, yoksa 0)</label><input id="w" type="number" value="25000">'+
+  '<label>Evin değeri (yoksa 0)</label><input id="h" type="number" value="2500000">'+
+  '<label>Arabanın değeri (yoksa 0)</label><input id="c" type="number" value="600000">'+
+  '<label>Arsanın değeri (yoksa 0)</label><input id="p" type="number" value="0">'+
+  '<button class="b" onclick="start()">Siteye gir</button></div></div>';
+}
+function start(){
+  G={bal:1000,debt:0,w:+$('#w').value||0,items:{'Ev':+$('#h').value||0,'Araba':+$('#c').value||0,'Arsa':+$('#p').value||0},
+  wl:12,al:20,bet:100,bets:0,paid:0,hist:[],sold:[],lose:0,msg:'Hoş geldin! İlk bahis bizden.',busy:0,t0:Date.now(),view:'lobby',g:null,last:null};
+  show('lobby');
+}
+function shell(body){
+  $('#m').innerHTML='<div id="sh"><nav class="sd"><button title="Lobi" onclick="show(\'lobby\')">⌂</button><button title="Kasa" onclick="show(\'kasa\')">$</button><button title="Çıkış ve sonuç" onclick="end()">⏻</button></nav><div class="ct"><div class="tp"><b class="lg">ALTINŞANS</b><span class="bc">'+fmt(G.bal)+'</span><button class="gb" onclick="show(\'kasa\')">Kasa</button></div>'+body+'</div></div>';
+}
+function show(v){if(G.busy)return;G.view=v;
+  if(v=='lobby'){
+    shell('<div class="bn"><small>Özel Hoş Geldin Teklifi</small><h2>%125 bonus, 1.000 ₺’ye kadar</h2><p>+ 180 bedava dönüş (sanal)</p><button class="gb" onclick="openG(0,0)">Hemen oyna</button></div>'+
+    '<div class="tabs"><button class="on" onclick="tab(this,\'\')">Tümü</button><button onclick="tab(this,\'s\')">Slot</button><button onclick="tab(this,\'r\')">Canlı Casino</button></div>'+
+    ROWS.map((r,ri)=>'<div class="rw" data-c="'+r[1]+'"><h3>'+r[0]+'</h3><div class="sc">'+r[2].map((g,gi)=>'<button class="t" style="background:linear-gradient(160deg,hsl('+g[1]+' 80% 55%),hsl('+(g[1]+40)+' 70% 22%))" onclick="openG('+ri+','+gi+')"><i>'+g[2]+'</i><b>'+g[0]+'</b></button>').join('')+'</div></div>').join(''));
+  }else if(v=='game'){
+    const g=G.g,r=g.k=='r';
+    shell('<button class="b g" style="margin:0 0 10px" onclick="show(\'lobby\')">← Lobi</button><div class="cd"><b>'+g.n+'</b><div class="res" id="res">'+(G.last??(r?'?':'? ? ?'))+'</div>'+
+    (r?'<div style="text-align:center">'+G.hist.slice(-10).map(n=>'<span class="chip" style="background:'+(n==0?'#22c55e':RED.includes(n)?'var(--rd)':'#222')+'">'+n+'</span>').join('')+'</div>':'')+
+    '<div class="msg" id="msg">'+G.msg+'</div><label>Bahis miktarı</label><input id="bt" type="number" value="'+G.bet+'">'+
+    '<div style="display:flex;gap:6px;margin-top:8px">'+[100,500,1000].map(v=>'<button class="b g" style="margin:0;padding:9px" onclick="setB('+v+')">'+v+'</button>').join('')+'<button class="b g" style="margin:0;padding:9px" onclick="setB(G.bal)">TÜMÜ</button></div>'+
+    (r?'<div class="two" style="margin-top:10px"><button class="b r" onclick="play(\'r\')">KIRMIZI</button><button class="b k" onclick="play(\'b\')">SİYAH</button></div>':'<button class="b" onclick="play()">DÖNDÜR</button>')+'</div>');
+  }else{
+    const it=Object.entries(G.items).filter(e=>e[1]>0);
+    shell('<div class="cd"><b>Kasa: para yatır</b><p style="margin:6px 0">Borç: '+fmt(G.debt)+'</p><div id="pw"><small id="pt"></small><div style="background:#2a2749;border-radius:6px"><div id="pb"></div></div></div>'+
+    '<button class="b g" onclick="ad()"'+(G.al<1?' disabled':'')+'>Reklam izle (+250 ₺) · '+G.al+' hak</button>'+
+    (G.w>0?'<button class="b g" onclick="work()"'+(G.wl<1?' disabled':'')+'>Çalış, maaşını yatır (+'+fmt(G.w)+') · '+G.wl+' ay</button>':'')+
+    '<button class="b g" onclick="credit()"'+(G.debt+6000>limit()?' disabled':'')+'>Kaldıraç: 5.000 ₺ çek (6.000 ₺ borç)</button>'+
+    it.map(e=>'<button class="b g" onclick="sell(\''+e[0]+'\')">'+e[0]+' sat (acil satış: '+fmt(e[1]*.7)+')</button>').join('')+
+    '</div><button class="b k" onclick="end()">Çık ve sonucu gör</button>');
+  }
+}
+function tab(b,c){document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('on',x==b));document.querySelectorAll('.rw').forEach(r=>r.style.display=(!c||r.dataset.c==c)?'':'none')}
+function openG(ri,gi){const g=ROWS[ri][2][gi];G.g={n:g[0],k:ROWS[ri][1]};G.last=null;show('game')}
+const setB=v=>{G.bet=Math.floor(v);$('#bt').value=G.bet};
+
+function timed(l,s,fn){if(G.busy)return;G.busy=1;$('#pw').style.display='block';$('#pt').textContent=l;let t=0;
+  const iv=setInterval(()=>{t+=.1;$('#pb').style.width=Math.min(100,t/s*100)+'%';if(t>=s){clearInterval(iv);G.busy=0;fn();show('kasa')}},100)}
+const ad=()=>timed('Reklam izleniyor…',5,()=>{G.bal+=250;G.al--;G.msg='+250 ₺ reklam geliri. Kaybetmesi 1 dakika sürer.'});
+const work=()=>timed('Çalışıyorsun…',8,()=>{G.bal+=G.w;G.wl--;G.msg='Maaşın yattı. Bir aylık emeğin masaya girdi.'});
+function credit(){if(G.busy)return;G.bal+=5000;G.debt+=6000;G.msg='Kaldıraç: 5.000 ₺ aldın, 6.000 ₺ borçlandın.';show('kasa')}
+function sell(k){if(G.busy)return;const v=G.items[k];G.bal+=v*.7;G.sold.push(k+' ('+fmt(v)+' değer, '+fmt(v*.7)+'’ya gitti)');G.items[k]=0;G.msg=k+' satıldı. Geri alamazsın.';show('kasa')}
+
+function play(side){
+  if(G.busy)return;const b=Math.floor(+$('#bt').value||0);G.bet=b;
+  if(b<10||b>G.bal){$('#msg').textContent='Geçerli bir miktar gir (en az 10 ₺, bakiyenden fazla olamaz). Para bittiyse Kasa’ya bak.';return}
+  G.busy=1;const r=G.g.k=='r';let i=0;
+  const iv=setInterval(()=>{$('#res').textContent=r?Math.floor(Math.random()*37):pick(SYM)+' '+pick(SYM)+' '+pick(SYM);if(++i>12){clearInterval(iv);done()}},80);
+  function done(){
+    G.busy=0;G.bal-=b;G.bets+=b;
+    const win=Math.random()<(r?.42:.28),mult=r?2:3;let out;
+    if(r){out=win?pick(side=='r'?RED:BLK):(Math.random()<.08?0:pick(side=='r'?BLK:RED));G.hist.push(out)}
+    else if(win){const s=pick(SYM);out=s+' '+s+' '+s}
+    else{const a=pick(SYM);let c;do{c=pick(SYM)}while(c==a);out=Math.random()<.45?a+' '+a+' '+c:pick(SYM)+' '+a+' '+c}
+    if(win){G.bal+=mult*b;G.paid+=mult*b;G.lose=0;G.msg=pick(['Kazandın! Şans seninle, devam et!','+'+fmt((mult-1)*b)+' kâr. Bu sefer büyük oyna.'])}
+    else{G.lose++;G.msg=G.lose>=3?'Üst üste kaybettin. Kaybı geri almanın tam zamanı!':pick(['Az kaldı! Bir dahaki sefere kesin.','Neredeyse tutuyordu.','Şans dönüyor, hissediyorum.'])}
+    G.last=out;
+    if(G.bal<10){if(!canRaise())return end();G.msg='Bakiyen bitti. Kasa’dan para yatırabilirsin.'}
+    show('game');
+  }
+}
+
+function end(){
+  if(G.busy)return;
+  const net=G.paid-G.bets,total=G.bal+Object.values(G.items).reduce((a,b)=>a+b,0)-G.debt;
+  $('#m').innerHTML='<div class="ct" style="max-width:520px;margin:auto"><h1>SİMÜLASYON BİTTİ</h1><p style="text-align:center;color:var(--mu)">Hiçbir şey gerçek değildi. Ama bu sistemin işleyişi gerçek.</p>'+
+  '<div class="cd"><div class="st"><span>Toplam oynanan bahis</span><b>'+fmt(G.bets)+'</b></div><div class="st"><span>Bahislerde net sonuç</span><b style="color:'+(net<0?'var(--rd)':'#22c55e')+'">'+fmt(net)+'</b></div>'+
+  '<div class="st"><span>Kalan borç</span><b>'+fmt(G.debt)+'</b></div><div class="st"><span>Satılan varlık</span><b>'+(G.sold.length||'Yok')+'</b></div>'+
+  (G.w>0&&net<0?'<div class="st"><span>Kayıp, kaç aylık maaş?</span><b>'+(-net/G.w).toFixed(1)+' ay</b></div>':'')+
+  '<div class="st"><span>Toplam net durumun</span><b>'+fmt(total)+'</b></div><small>'+G.sold.join(' · ')+'</small></div>'+
+  '<h2 style="font-size:18px">Sana ne oldu?</h2><div class="cd"><ul style="padding-left:18px;margin:0">'+
+  '<li><b>Ev avantajı:</b> Rulette kazanma şansın %42 ve 2 kat alıyordun, slotta %28 ve 3 kat. Her 100 ₺ bahsin ortalama 84 ₺’si geri dönüyordu. Kısa vadede kazanabilirsin, uzun vadede matematik kaybettirir.</li>'+
+  '<li><b>Kayıp kovalama:</b> Kaybettikçe “geri alırım” dedin ve miktar büyüdü. Bu, batık maliyet yanılgısıdır.</li>'+
+  '<li><b>Ramak kala etkisi:</b> “Az kaldı” mesajları ve iki aynı sembol, kaybı kazanca yakın gösterir ve oynatmaya devam ettirir.</li>'+
+  '<li><b>Sahte kazananlar:</b> Üstte akan kazananlar rastgele üretilmişti. “Herkes kazanıyor” hissi böyle kurulur (sosyal kanıt).</li>'+
+  '<li><b>Bonus ve bedava dönüş:</b> Yem olarak görünür, seni içeri çeker.</li>'+
+  '<li><b>Kolay para yolları:</b> Reklam, kredi ve acil satış seni masada tutan kapılardı.</li></ul></div>'+
+  '<div class="cd"><b>Kumar kontrolden çıkıyorsa</b><p style="margin:6px 0 0">Yalnız değilsin. Yeşilay Danışmanlık Merkezi (YEDAM) gibi resmi kurumlardan ücretsiz destek alabilirsin. Güncel iletişim bilgisi için Yeşilay’ın resmi sitesine bak.</p></div>'+
+  '<button class="b" onclick="intro()">Baştan oyna</button></div>';
+}
+intro();
+</script>
+</body>
+</html>
